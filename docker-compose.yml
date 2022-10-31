@@ -16,9 +16,9 @@ services:
     networks:
       - hoststest
   apache:
-    image: httpd
+    #image: httpd
     # apache httpd:2.4.51
-    container_name: apache
+    container_name: hoststest-apache
     build: ./docker-compose/apache
     depends_on:
       - php
@@ -34,8 +34,8 @@ services:
     networks:
       - hoststest
   php:
-    image: php:latest
-    container_name: php
+    #image: php:latest
+    container_name: hoststest-php
     build: ./docker-compose/php
     links:
       - mariadb
@@ -55,7 +55,7 @@ services:
   mariadb:
     image: mariadb:latest
     # image: mariadb:10.8.3
-    container_name: mariadb
+    container_name: hoststest-mariadb
     restart: always
     healthcheck:
       test: "/usr/bin/mysql --user=root --password=root_password --execute 
@@ -77,7 +77,7 @@ services:
       - hoststest
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: pma
+    container_name: hoststest-pma
     links:
       - mariadb
     environment:
