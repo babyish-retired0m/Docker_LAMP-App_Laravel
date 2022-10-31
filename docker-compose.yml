@@ -1,0 +1,94 @@
+version: "3.9"
+services:
+  app:
+    build:
+      args:
+        user: sammy
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: lamp-app-hoststest
+    container_name: app-hoststest-lamp
+    restart: unless-stopped
+    working_dir: /usr/local/apache2/htdocs
+    volumes:
+      - ./:/usr/local/apache2/htdocs
+    networks:
+      - hoststest
+  apache:
+    image: httpd
+    # apache httpd:2.4.51
+    container_name: apache
+    build: ./docker-compose/apache
+    depends_on:
+      - php
+      - mariadb
+      #- mysql
+    links:
+      - php
+    ports:
+      - '80:80'
+    volumes:
+      #- ./src:/usr/local/apache2/htdocs
+      - ./public_html/:/var/www/html/
+    networks:
+      - hoststest
+  php:
+    image: php:latest
+    container_name: php
+    build: ./docker-compose/php
+    links:
+      - mariadb
+    ports:
+      - '9000:9000'
+    volumes:
+      - ./public_html/:/var/www/html/
+      #- ./:/usr/local/apache2/htdocs
+      #- ./public:/usr/local/apache2/htdocs
+      #- ./src:/usr/local/apache2/htdocs
+      #- ./public_html/:/usr/local/apache2/htdocs
+      #- ./public_html/:/var/www/html/
+    #working_dir: /usr/local/apache2/htdocs
+    working_dir: /usr/local/apache2/htdocs/public
+    networks:
+      - hoststest
+  mariadb:
+    image: mariadb:latest
+    # image: mariadb:10.8.3
+    container_name: mariadb
+    restart: always
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=root_password --execute 
+\"SHOW DATABASES;\""
+      interval: 2s
+      timeout: 30s
+      retries: 15
+    environment:
+      MARIADB_ROOT_PASSWORD: root_password
+      MARIADB_AUTO_UPGRADE: "yes"
+      MARIADB_USER: user
+      MARIADB_DATABASE: database
+      MARIADB_PASSWORD: password
+    ports:
+      - '3306:3306'
+    volumes:
+      - "${PWD}/docker-compose/mysql/:/var/lib/mysql"
+    networks:
+      - hoststest
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pma
+    links:
+      - mariadb
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - '8085:80'
+    networks:
+      - hoststest
+networks:
+  hoststest:
+    driver: bridge
